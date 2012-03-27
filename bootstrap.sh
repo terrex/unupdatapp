@@ -1,5 +1,4 @@
 #!/bin/sh
 
-autoreconf --install --force
-automake --add-missing --copy --force
+autoreconf --verbose --install --force
 ./configure
