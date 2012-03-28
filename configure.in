@@ -17,9 +17,12 @@ AC_PROG_INSTALL
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
 
 # Checks for library functions.
+AC_FUNC_MALLOC
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
