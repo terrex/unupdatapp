@@ -6,6 +6,32 @@
 
 #define FILE_SEPARATOR "\x55\xAA\x5A\xA5"
 
+void print_bytes(void *value, size_t n)
+{
+    if(n == 1) {
+        printf(" %02X", (*(char*)value) & 0x000000FF);
+    } else if(n == 2) {
+        printf(" %02X", (*(char*)value) & 0x000000FF);
+        printf(" %02X", (*(char*)(value + 1)) & 0x000000FF);
+    } else if(n == 3) {
+        printf(" %02X", (*(char*)value) & 0x000000FF);
+        printf(" %02X", (*(char*)(value + 1)) & 0x000000FF);
+        printf(" %02X", (*(char*)(value + 2)) & 0x000000FF);
+    } else if(n == 4) {
+        printf(" %02X", (*(char*)value) & 0x000000FF);
+        printf(" %02X", (*(char*)(value + 1)) & 0x000000FF);
+        printf(" %02X", (*(char*)(value + 2)) & 0x000000FF);
+        printf(" %02X", (*(char*)(value + 3)) & 0x000000FF);
+    } else if(n > 4) {
+        print_bytes(value, 4);
+        print_bytes(value + 1, n - 4);
+    }
+}
+
+#define PRINT_GET_POS(f) { fpos_t tam; fgetpos((f), &tam); printf("current offset %d\n", tam); }
+#define READED(val) { printf("data read:"); print_bytes(&(val), sizeof(val)); printf("\n"); }
+#define READED_PTR(val, tam) { printf("data read:"); print_bytes((val), (tam)); printf("\n"); }
+
 typedef struct {
     uint32_t header_length;     /*  4 bytes */
     uint32_t one_value;         /*  4 bytes */
@@ -86,13 +112,31 @@ const char* guess_filename(uint32_t file_sequence) {
 packet_t parse_file(FILE *input)
 {
     packet_t packet;
-    fread(&packet.header, sizeof(packet.header), 1, input);
+    fread(&packet.header.header_length, sizeof(packet.header.header_length), 1, input);
+READED(packet.header.header_length)
+    fread(&packet.header.one_value, sizeof(packet.header.one_value), 1, input);
+READED(packet.header.one_value)
+    fread(packet.header.hardware_id, sizeof(packet.header.hardware_id), 1, input);
+READED(packet.header.hardware_id)
+    fread(&packet.header.file_sequence, sizeof(packet.header.file_sequence), 1, input);
+READED(packet.header.file_sequence)
+    fread(&packet.header.data_file_length, sizeof(packet.header.data_file_length), 1, input);
+READED(packet.header.data_file_length)
+    fread(packet.header.date, sizeof(packet.header.date), 1, input);
+READED(packet.header.date)
+    fread(packet.header.time, sizeof(packet.header.time), 1, input);
+READED(packet.header.time)
+    fread(packet.header.input_word, sizeof(packet.header.input_word), 1, input);
+    fread(packet.header.blank, sizeof(packet.header.blank), 1, input);
+    fread(&packet.header.header_crc, sizeof(packet.header.header_crc), 1, input);
+    fread(&packet.header.one_value2, sizeof(packet.header.one_value2), 1, input);
+    fread(&packet.header.blank2, sizeof(packet.header.blank2), 1, input);
     packet.crc = malloc(packet.header.header_length - 98);
     fread(packet.crc, 1, (packet.header.header_length - 98), input);
     packet.file_data = malloc(packet.header.data_file_length);
     printf("reading %d bytes\n", packet.header.data_file_length);
     fread(packet.file_data, 1, packet.header.data_file_length, input);
-    packet.filename = guess_filename(packet.header.file_sequence);
+    packet.filename = (char*)guess_filename(packet.header.file_sequence);
 
     return packet;
 }
@@ -102,8 +146,9 @@ int main(int argc, char *argv[])
     FILE *input = ((argc == 2 && strcmp(argv[1], "-") != 0) ? fopen(argv[1], "rb") : stdin);
     uint8_t word[4];
     packet_t packet;
-    while (fread(&word, sizeof(word), 1, input)) {
+    while (fread(word, sizeof(word), 1, input)) {
         if (memcmp(word, FILE_SEPARATOR, sizeof(word)) == 0) {
+READED_PTR(word, 4)
             printf("found file separator, reading\n");
             packet = parse_file(input);
             printf("file read: %s\n", packet.filename);
