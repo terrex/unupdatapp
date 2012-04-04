@@ -6,6 +6,7 @@
 
 #define FILE_SEPARATOR "\x55\xAA\x5A\xA5"
 
+#ifdef HAVE_DEBUG
 void print_bytes(void *value, size_t n)
 {
     if(n == 1) {
@@ -27,10 +28,14 @@ void print_bytes(void *value, size_t n)
         print_bytes(value + 4, n - 4);
     }
 }
-
 #define PRINT_GET_POS(f) { fpos_t tam; fgetpos((f), &tam); printf("current offset %d\n", tam); }
 #define READED(val) { printf("data read:"); print_bytes(&(val), sizeof(val)); printf("\n"); }
 #define READED_PTR(val, tam) { printf("data read (%d bytes long):", (tam)); print_bytes((val), (tam)); printf("\n"); }
+#else /* HAVE_DEBUG */
+#define PRINT_GET_POS(f)
+#define READED(val)
+#define READED_PTR(val, tam)
+#endif /* HAVE_DEBUG */
 
 typedef struct {
     uint32_t header_length;     /*  4 bytes */
@@ -109,6 +114,13 @@ const char* guess_filename(uint32_t file_sequence) {
     }
 }
 
+static void fseek_align4(FILE *input)
+{
+    fpos_t position;
+    fgetpos(input, &position);
+    fseek(input, position.__pos % 4, SEEK_CUR);
+}
+
 packet_t parse_file(FILE *input)
 {
     packet_t packet;
@@ -139,11 +151,12 @@ READED(packet.header.blank2)
     packet.crc = malloc(packet.header.header_length - 98);
     fread(packet.crc, 1, (packet.header.header_length - 98), input);
 READED_PTR(packet.crc, packet.header.header_length - 98)
+    fseek_align4(input);
     packet.file_data = malloc(packet.header.data_file_length);
     printf("reading %d bytes\n", packet.header.data_file_length);
     fread(packet.file_data, 1, packet.header.data_file_length, input);
 //READED_PTR(packet.file_data, packet.header.data_file_length)
-// TODO: read up to 4 byte boundary alignment
+    fseek_align4(input);
     packet.filename = (char*)guess_filename(packet.header.file_sequence);
 
     return packet;
