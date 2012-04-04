@@ -24,13 +24,13 @@ void print_bytes(void *value, size_t n)
         printf(" %02X", (*(char*)(value + 3)) & 0x000000FF);
     } else if(n > 4) {
         print_bytes(value, 4);
-        print_bytes(value + 1, n - 4);
+        print_bytes(value + 4, n - 4);
     }
 }
 
 #define PRINT_GET_POS(f) { fpos_t tam; fgetpos((f), &tam); printf("current offset %d\n", tam); }
 #define READED(val) { printf("data read:"); print_bytes(&(val), sizeof(val)); printf("\n"); }
-#define READED_PTR(val, tam) { printf("data read:"); print_bytes((val), (tam)); printf("\n"); }
+#define READED_PTR(val, tam) { printf("data read (%d bytes long):", (tam)); print_bytes((val), (tam)); printf("\n"); }
 
 typedef struct {
     uint32_t header_length;     /*  4 bytes */
@@ -127,15 +127,23 @@ READED(packet.header.date)
     fread(packet.header.time, sizeof(packet.header.time), 1, input);
 READED(packet.header.time)
     fread(packet.header.input_word, sizeof(packet.header.input_word), 1, input);
+READED(packet.header.input_word)
     fread(packet.header.blank, sizeof(packet.header.blank), 1, input);
+READED(packet.header.blank)
     fread(&packet.header.header_crc, sizeof(packet.header.header_crc), 1, input);
+READED(packet.header.header_crc)
     fread(&packet.header.one_value2, sizeof(packet.header.one_value2), 1, input);
+READED(packet.header.one_value2)
     fread(&packet.header.blank2, sizeof(packet.header.blank2), 1, input);
+READED(packet.header.blank2)
     packet.crc = malloc(packet.header.header_length - 98);
     fread(packet.crc, 1, (packet.header.header_length - 98), input);
+READED_PTR(packet.crc, packet.header.header_length - 98)
     packet.file_data = malloc(packet.header.data_file_length);
     printf("reading %d bytes\n", packet.header.data_file_length);
     fread(packet.file_data, 1, packet.header.data_file_length, input);
+//READED_PTR(packet.file_data, packet.header.data_file_length)
+// TODO: read up to 4 byte boundary alignment
     packet.filename = (char*)guess_filename(packet.header.file_sequence);
 
     return packet;
@@ -153,7 +161,7 @@ READED_PTR(word, 4)
             packet = parse_file(input);
             printf("file read: %s\n", packet.filename);
             FILE* output = fopen(packet.filename, "w+");
-            fwrite(&packet.file_data, 1, packet.header.data_file_length, output);
+            fwrite(packet.file_data, 1, packet.header.data_file_length, output);
             fclose(output);
         }
     }
