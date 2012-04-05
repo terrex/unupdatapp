@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "packet.h"
 
 /* private declarations */
@@ -16,6 +17,8 @@ static const char* guess_filename(uint32_t file_sequence);
 static void fseek_align4(FILE *input);
 
 /* private definitions */
+
+#define FILE_SEPARATOR "\x55\xAA\x5A\xA5"
 
 static file_sequence_pair_t FILE_SEQS[] = {
     { 0x10000000, "appsboot.mbn" },
@@ -51,13 +54,13 @@ static const char* guess_filename(uint32_t file_sequence)
 {
     int i;
     char *result;
-    
+
     for(i = 0; i < sizeof(FILE_SEQS); i++) {
         if(file_sequence == FILE_SEQS[i].file_sequence) {
             return FILE_SEQS[i].filename;
         }
     }
-    
+
     result = calloc(sizeof(char), 20);
     sprintf(result, "unknown_file.%d", UNKNOWN_COUNT++);
     return (const char*)result;
@@ -68,8 +71,8 @@ static void fseek_align4(FILE *input)
     fpos_t position;
 
     fgetpos(input, &position);
-    //fseek(input, position.__pos % 4, SEEK_CUR);
-    switch((position.__pos) % 4) {
+    switch((position.__pos) % 4) { /* perhaps .__pos should be changed to
+                                       another more portable code */
         case 0:
             break;
         case 1:
@@ -94,28 +97,47 @@ void start_read_packets()
     UNKNOWN_COUNT = 0;
 }
 
-packet_t parse_next_file(FILE *input)
+packet_t *parse_next_file(FILE *input)
 {
-    packet_t packet;
+    uint8_t word[4];
+    packet_t *packet;
 
-    fread(&packet.header.header_length, sizeof(packet.header.header_length), 1, input);
-    fread(&packet.header.one_value, sizeof(packet.header.one_value), 1, input);
-    fread(packet.header.hardware_id, sizeof(packet.header.hardware_id), 1, input);
-    fread(&packet.header.file_sequence, sizeof(packet.header.file_sequence), 1, input);
-    fread(&packet.header.data_file_length, sizeof(packet.header.data_file_length), 1, input);
-    fread(packet.header.date, sizeof(packet.header.date), 1, input);
-    fread(packet.header.time, sizeof(packet.header.time), 1, input);
-    fread(packet.header.input_word, sizeof(packet.header.input_word), 1, input);
-    fread(packet.header.blank, sizeof(packet.header.blank), 1, input);
-    fread(&packet.header.header_crc, sizeof(packet.header.header_crc), 1, input);
-    fread(&packet.header.one_value2, sizeof(packet.header.one_value2), 1, input);
-    fread(&packet.header.blank2, sizeof(packet.header.blank2), 1, input);
-    packet.crc = malloc(packet.header.header_length - 98);
-    fread(packet.crc, 1, (packet.header.header_length - 98), input);
-    packet.file_data = malloc(packet.header.data_file_length);
-    fread(packet.file_data, 1, packet.header.data_file_length, input);
+    packet = malloc(sizeof(packet_t));
+
+    /* consume input until FILE_SEPARATOR has been found */
+    while(fread(word, sizeof(word), 1, input)) {
+        if (memcmp(word, FILE_SEPARATOR, sizeof(word)) == 0) {
+            break;
+        }
+    }
+
+    if(feof(input)) {
+        return NULL;
+    }
+
+    /* start read of fixed sized header (94 bytes long) */
+    fread(&packet->header.header_length, sizeof(packet->header.header_length), 1, input);
+    fread(&packet->header.one_value, sizeof(packet->header.one_value), 1, input);
+    fread(packet->header.hardware_id, sizeof(packet->header.hardware_id), 1, input);
+    fread(&packet->header.file_sequence, sizeof(packet->header.file_sequence), 1, input);
+    fread(&packet->header.data_file_length, sizeof(packet->header.data_file_length), 1, input);
+    fread(packet->header.date, sizeof(packet->header.date), 1, input);
+    fread(packet->header.time, sizeof(packet->header.time), 1, input);
+    fread(packet->header.input_word, sizeof(packet->header.input_word), 1, input);
+    fread(packet->header.blank, sizeof(packet->header.blank), 1, input);
+    fread(&packet->header.header_crc, sizeof(packet->header.header_crc), 1, input);
+    fread(&packet->header.one_value2, sizeof(packet->header.one_value2), 1, input);
+    fread(&packet->header.blank2, sizeof(packet->header.blank2), 1, input);
+    
+    /* start read of variable sized CRC & data */
+    packet->crc = malloc(packet->header.header_length - 98);
+    fread(packet->crc, 1, (packet->header.header_length - 98), input);
+    packet->file_data = malloc(packet->header.data_file_length);
+    fread(packet->file_data, 1, packet->header.data_file_length, input);
+    packet->filename = (char*)guess_filename(packet->header.file_sequence);
+
+    /* seek file up to next 4-byte boundary alignment */
     fseek_align4(input);
-    packet.filename = (char*)guess_filename(packet.header.file_sequence);
 
     return packet;
 }

@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define FILE_SEPARATOR "\x55\xAA\x5A\xA5"
-
 typedef struct {
     uint32_t header_length;     /*  4 bytes */
     uint32_t one_value;         /*  4 bytes */
@@ -27,8 +25,10 @@ typedef struct {
     char *filename;
 } packet_t;
 
-packet_t parse_next_file(FILE *input);
+/* Parse one single packet (file) */
+packet_t *parse_next_file(FILE *input);
 
+/* To be called when I am going to parse a new UPDATA.APP */
 void start_read_packets();
 
 #endif /* __PACKET_H__ */

@@ -39,29 +39,26 @@ void print_bytes(void *value, size_t n)
 #define READED_PTR(val, tam)
 #endif /* HAVE_DEBUG */
 
+/* main program entry point */
 int main(int argc, char *argv[])
 {
     FILE *input;
     char destination[255];
-    uint8_t word[4];
-    packet_t packet;
-    
+    packet_t *packet;
+
     input = fopen(argv[1], "rb");
     start_read_packets();
     mkdir(argv[2], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    while (fread(word, sizeof(word), 1, input)) {
-        if (memcmp(word, FILE_SEPARATOR, sizeof(word)) == 0) {
-            packet = parse_next_file(input);
-            printf("Extracted %s\n", packet.filename);
-            destination[0] = '\0';
-            strcat(destination, argv[2]);
-            strcat(destination, "/");
-            strcat(destination, packet.filename);
-            FILE* output = fopen(destination, "w+");
-            fwrite(packet.file_data, 1, packet.header.data_file_length, output);
-            fclose(output);
-        }
+    while(packet = parse_next_file(input)) {
+        printf("Extracted %s\n", packet->filename);
+        destination[0] = '\0';
+        strcat(destination, argv[2]);
+        strcat(destination, "/");
+        strcat(destination, packet->filename);
+        FILE* output = fopen(destination, "w+");
+        fwrite(packet->file_data, 1, packet->header.data_file_length, output);
+        fclose(output);
     }
     fclose(input);
 
