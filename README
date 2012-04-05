@@ -1,0 +1,26 @@
+unupdatapp
+==========
+
+(C) 2012 Guillermo Gutiérrez.
+
+Based on the work by ZeBadger available at [1].
+
+This program is made up for to unpack and repack `UPDATA.APP' files from huawei
+android-based devices.
+
+Work is in progress, and any type of collaboration is welcomed. You can
+find me at <xiterrex@gmail.com>, or [2].
+
+License is GPLv3 as you can see in the file COPYING.
+
+= Testing the code =
+
+You can drop a sample `UPDATA.APP' to `tests/' directory, and then, runing the
+`make check' target will test the program itself, first against the original
+`split_updata.pl' program, and afterwards, repacking the unpacked file and
+test for it equality.
+
+= References =
+
+[1] <http://android.modaco.com/topic/311344-repacking-updataapp-was-new-version-of-split-updatapl/>
+[2] <http://github.com/terrex>
