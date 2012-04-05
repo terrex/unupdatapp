@@ -3,8 +3,8 @@
 rm -Rf output
 rm -Rf output_mine
 
-./split_updata.pl UPDATA.APP
-../src/unupdatapp UPDATA.APP output_mine
+${srcdir}/tests/split_updata.pl UPDATA.APP
+${srcdir}/src/unupdatapp UPDATA.APP output_mine
 
-(cd output && md5sum *) | (cd output_mine && md5sum -c)
+(cd ${srcdir}/tests/output && md5sum *) | (cd ${srcdir}/tests/output_mine && md5sum -c)
 exit $?
