@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
     uint32_t header_length;     /*  4 bytes */
@@ -23,6 +24,8 @@ typedef struct {
     char *crc;                  /* variable size */
     char *file_data;            /* variable size */
     char *filename;
+    int crc_length;
+    bool is_crc_ok;
 } packet_t;
 
 /* Parse one single packet (file) */

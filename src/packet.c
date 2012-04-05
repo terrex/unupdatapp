@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "packet.h"
+#include "crc.h"
 
 /* private declarations */
 
@@ -130,14 +131,18 @@ packet_t *parse_next_file(FILE *input)
     fread(&packet->header.blank2, sizeof(packet->header.blank2), 1, input);
     
     /* start read of variable sized CRC & data */
-    packet->crc = malloc(packet->header.header_length - 98);
-    fread(packet->crc, 1, (packet->header.header_length - 98), input);
+    packet->crc_length = packet->header.header_length - 98;
+    packet->crc = malloc(packet->crc_length);
+    fread(packet->crc, 1, packet->crc_length, input);
     packet->file_data = malloc(packet->header.data_file_length);
     fread(packet->file_data, 1, packet->header.data_file_length, input);
     packet->filename = (char*)guess_filename(packet->header.file_sequence);
 
     /* seek file up to next 4-byte boundary alignment */
     fseek_align4(input);
+
+    /* test for crc ok */
+    packet->is_crc_ok = (memcmp(packet->crc, , packet->crc_length));
 
     return packet;
 }
