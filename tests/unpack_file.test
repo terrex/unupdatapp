@@ -1,4 +1,10 @@
-#!/bin/sh -e
+#!/bin/bash -xe
 
-exec ../src/unupdatapp UPDATA.APP
+rm -Rf output
+rm -Rf output_mine
 
+./split_updata.pl UPDATA.APP
+../src/unupdatapp UPDATA.APP output_mine
+
+(cd output && md5sum *) | (cd output_mine && md5sum -c)
+exit $?

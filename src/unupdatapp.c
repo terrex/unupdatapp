@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define FILE_SEPARATOR "\x55\xAA\x5A\xA5"
 
@@ -59,7 +61,10 @@ typedef struct {
     char *filename;
 } packet_t;
 
-const char* guess_filename(uint32_t file_sequence) {
+static const char* guess_filename(uint32_t file_sequence) {
+    static int unknown_count = 0;
+    char *result;
+
     switch(file_sequence) {
         case 0x10000000:
             return	"appsboot.mbn";
@@ -111,19 +116,41 @@ const char* guess_filename(uint32_t file_sequence) {
             return "file18.mbn";
         case 0xFF000000:
             return "file21.mbn";
+        default:
+            result = calloc(sizeof(char), 20);
+            sprintf(result, "unknown_file.%d", unknown_count++);
+            return (const char*)result;
     }
 }
 
 static void fseek_align4(FILE *input)
 {
     fpos_t position;
+
     fgetpos(input, &position);
-    fseek(input, position.__pos % 4, SEEK_CUR);
+    //fseek(input, position.__pos % 4, SEEK_CUR);
+    switch((position.__pos) % 4) {
+        case 0:
+            break;
+        case 1:
+            fgetc(input);
+            fgetc(input);
+            fgetc(input);
+            break;
+        case 2:
+            fgetc(input);
+            fgetc(input);
+            break;
+        case 3:
+            fgetc(input);
+            break;
+    }
 }
 
 packet_t parse_file(FILE *input)
 {
     packet_t packet;
+
     fread(&packet.header.header_length, sizeof(packet.header.header_length), 1, input);
 READED(packet.header.header_length)
     fread(&packet.header.one_value, sizeof(packet.header.one_value), 1, input);
@@ -150,8 +177,7 @@ READED(packet.header.one_value2)
 READED(packet.header.blank2)
     packet.crc = malloc(packet.header.header_length - 98);
     fread(packet.crc, 1, (packet.header.header_length - 98), input);
-READED_PTR(packet.crc, packet.header.header_length - 98)
-    fseek_align4(input);
+//READED_PTR(packet.crc, packet.header.header_length - 98)
     packet.file_data = malloc(packet.header.data_file_length);
     printf("reading %d bytes\n", packet.header.data_file_length);
     fread(packet.file_data, 1, packet.header.data_file_length, input);
@@ -164,7 +190,12 @@ READED_PTR(packet.crc, packet.header.header_length - 98)
 
 int main(int argc, char *argv[])
 {
-    FILE *input = ((argc == 2 && strcmp(argv[1], "-") != 0) ? fopen(argv[1], "rb") : stdin);
+    FILE *input;
+    char destination[255];
+    
+    input = fopen(argv[1], "rb");
+    mkdir(argv[2], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
     uint8_t word[4];
     packet_t packet;
     while (fread(word, sizeof(word), 1, input)) {
@@ -173,7 +204,11 @@ READED_PTR(word, 4)
             printf("found file separator, reading\n");
             packet = parse_file(input);
             printf("file read: %s\n", packet.filename);
-            FILE* output = fopen(packet.filename, "w+");
+            destination[0] = '\0';
+            strcat(destination, argv[2]);
+            strcat(destination, "/");
+            strcat(destination, packet.filename);
+            FILE* output = fopen(destination, "w+");
             fwrite(packet.file_data, 1, packet.header.data_file_length, output);
             fclose(output);
         }
