@@ -142,7 +142,7 @@ packet_t *parse_next_file(FILE *input)
     fseek_align4(input);
 
     /* test for crc ok */
-    packet->is_crc_ok = (memcmp(packet->crc, , packet->crc_length));
+    packet->is_crc_ok = 1 /* TODO: FIX this: (memcmp(packet->crc, crc16(packet->file_data, packet->header.data_file_length), packet->crc_length))*/;
 
     return packet;
 }

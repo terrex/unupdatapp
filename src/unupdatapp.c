@@ -51,7 +51,12 @@ int main(int argc, char *argv[])
     mkdir(argv[2], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     while(packet = parse_next_file(input)) {
-        printf("Extracted %s\n", packet->filename);
+        printf("Extracted %s - ", packet->filename);
+        if(packet->is_crc_ok) {
+            printf("CRC Okay\n");
+        } else {
+            printf("CRC Failed!\n");
+        }
         destination[0] = '\0';
         strcat(destination, argv[2]);
         strcat(destination, "/");

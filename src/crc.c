@@ -8,12 +8,17 @@
 char *
 crc16(const char *data, int length)
 {
-    FILE *pipe;/*TODO: save data to TEMP_FILE_FOR_CRC_CHECK*/
+    FILE *pipe;
+    FILE *tmp;/*TODO: save data to TEMP_FILE_FOR_CRC_CHECK*/
     char *crc;
     char *bytearray;
     int i;
     int size;
 
+    remove(TEMP_FILE_FOR_CRC_CHECK);
+    tmp = fopen(TEMP_FILE_FOR_CRC_CHECK, "wb+");
+    fwrite(data, sizeof(char), length, tmp);
+    fclose(TEMP_FILE_FOR_CRC_CHECK);
     pipe = popen("./crc" TEMP_FILE_FOR_CRC_CHECK, "r");
     fscanf(pipe, "%as", crc);
     size = strlen(crc) / 2;
