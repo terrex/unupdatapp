@@ -93,15 +93,16 @@ static void fseek_align4(FILE *input)
 
 /* public definitions */
 
-void start_read_packets()
-{
-    UNKNOWN_COUNT = 0;
-}
-
 packet_t *parse_next_file(FILE *input)
 {
     uint8_t word[4];
     packet_t *packet;
+    static FILE *last_input;
+
+    if(input != last_input) {
+        last_input = input;
+        UNKNOWN_COUNT = 0;
+    }
 
     packet = malloc(sizeof(packet_t));
 
@@ -129,7 +130,7 @@ packet_t *parse_next_file(FILE *input)
     fread(&packet->header.header_crc, sizeof(packet->header.header_crc), 1, input);
     fread(&packet->header.one_value2, sizeof(packet->header.one_value2), 1, input);
     fread(&packet->header.blank2, sizeof(packet->header.blank2), 1, input);
-    
+
     /* start read of variable sized CRC & data */
     packet->crc_length = packet->header.header_length - 98;
     packet->crc = malloc(packet->crc_length);
@@ -142,7 +143,7 @@ packet_t *parse_next_file(FILE *input)
     fseek_align4(input);
 
     /* test for crc ok */
-    packet->is_crc_ok = 1 /* TODO: FIX this: (memcmp(packet->crc, crc16(packet->file_data, packet->header.data_file_length), packet->crc_length))*/;
+    packet->is_crc_ok = memcmp(new_crc_t(packet->crc, packet->crc_length), crc16(packet->file_data, packet->header.data_file_length), packet->crc_length);
 
     return packet;
 }

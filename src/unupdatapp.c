@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     packet_t *packet;
 
     input = fopen(argv[1], "rb");
-    start_read_packets();
     mkdir(argv[2], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     while(packet = parse_next_file(input)) {

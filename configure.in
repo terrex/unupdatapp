@@ -34,7 +34,7 @@ AC_CHECK_FUNCS([mkdir])
 
 AM_CONDITIONAL(DEBUG, test x$DEBUG = xyes)
 if test "$DEBUG" = yes; then
-    AC_DEFINE(HAVE_DEBUG,1,[Enable debug support])
+    AC_DEFINE(HAVE_DEBUG, 1, [Enable debug support])
 fi
 
 AC_CONFIG_FILES([Makefile

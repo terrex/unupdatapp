@@ -31,7 +31,4 @@ typedef struct {
 /* Parse one single packet (file) */
 packet_t *parse_next_file(FILE *input);
 
-/* To be called when I am going to parse a new UPDATA.APP */
-void start_read_packets();
-
 #endif /* __PACKET_H__ */
