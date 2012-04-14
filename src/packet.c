@@ -56,7 +56,7 @@ static const char* guess_filename(uint32_t file_sequence)
     int i;
     char *result;
 
-    for(i = 0; i < sizeof(FILE_SEQS); i++) {
+    for(i = 0; i < sizeof(FILE_SEQS) / sizeof(FILE_SEQS[0]); i++) {
         if(file_sequence == FILE_SEQS[i].file_sequence) {
             return FILE_SEQS[i].filename;
         }

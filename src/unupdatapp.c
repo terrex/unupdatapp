@@ -51,10 +51,11 @@ int main(int argc, char *argv[])
 
     while(packet = parse_next_file(input)) {
         printf("Extracted %s - ", packet->filename);
+        fflush(stdout);
         if(packet->is_crc_ok) {
             printf("CRC Okay\n");
         } else {
-            printf("CRC Failed!\n");
+            printf("ERROR: CRC did not match\n");
         }
         destination[0] = '\0';
         strcat(destination, argv[2]);
