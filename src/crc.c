@@ -13,24 +13,32 @@ crc16(const char *data, int length)
     int infp;
     int outfp;
     int i;
+    unsigned int temp_read;
     int expected_length;
     char temp[3];
+    ssize_t written;
 
     result = calloc(sizeof(crc_t), 1);
-    expected_length = (length + 4095) / 4096 * 2;
+    expected_length = (length + (length % 4096)) / 4096 * 2;
     result->crc = malloc(expected_length + 1);
     popen2("./crc /dev/stdin", &infp, &outfp);
-    write(infp, data, length);
-    close(infp);
+
     temp[2] = '\0';
     i = 0;
+    written = 0;
+
+    write(infp, data, length);
+    close(infp);
     while(read(outfp, temp, 2) == 2) {
-        sscanf(temp, "%02X", (unsigned int *)result->crc + i);
+        sscanf(temp, "%02X", &temp_read);
+        result->crc[i] = (char)temp_read;
         i++;
     }
-printf("%d\n", i);
+
     result->crc[i] = '\0';
     result->length = i;
+
+//    close(infp);
     close(outfp);
 
     return result;
