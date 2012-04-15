@@ -39,7 +39,7 @@ crc16(const char *data, const int length)
     result = calloc(sizeof(crc_t), 1);
     result->length = ((length % 4096) ? length / 4096 + 1 : length / 4096) * 2;
     result->crc = malloc(result->length);
-    popen2("./crc /dev/stdin", &infp, &outfp);
+    popen2("unupdatapp_crc16 /dev/stdin", &infp, &outfp);
 
     pipe_writer_args.infp = infp;
     pipe_writer_args.data = data;

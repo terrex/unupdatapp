@@ -2,6 +2,10 @@
 
 rm -Rf output
 rm -Rf output_mine
+rm -f unupdatapp_crc16
+
+ln -s crc unupdatapp_crc16
+export PATH=.:$PATH
 
 ./split_updata.pl UPDATA.APP
 ../src/unupdatapp UPDATA.APP output_mine
