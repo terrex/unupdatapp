@@ -48,7 +48,11 @@ static file_sequence_pair_t FILE_SEQS[] = {
     { 0xFC000000, "file23.mbn" },
     { 0xFD000000, "file16.mbn" },
     { 0xFE000000, "file18.mbn" },
-    { 0xFF000000, "file21.mbn" }
+    { 0xFF000000, "file21.mbn" },
+    { 0xF2400000, "partition_table.mbn" } /* maybe? http://android-dls.com/wiki/index.php?title=How_to_unpack_and_repack_NB0_file */
+    { 0xF2500000, "qcsbl.mbn" }, /* https://docs.symbol.com/ReleaseNotes/Release%20Notes%20-%20MC659BOS23001.htm */
+    { 0xF6100000, "version_boot.txt"} /* guessed: this is the first boot version
+          listed in boot_versions.txt. To be self-upgradable. */
 };
 
 static int UNKNOWN_COUNT = 0;
@@ -65,7 +69,7 @@ static const char* guess_filename(uint32_t file_sequence)
     }
 
     result = calloc(sizeof(char), 20);
-    printf("unknown_file.%d has a file_seq of: %08X\n", UNKNOWN_COUNT, file_sequence);
+    printf("unknown_file.%d has a file_seq of: 0x%08X\n", UNKNOWN_COUNT, file_sequence);
     sprintf(result, "unknown_file.%d", UNKNOWN_COUNT++);
     return (const char*)result;
 }

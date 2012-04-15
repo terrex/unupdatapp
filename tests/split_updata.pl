@@ -47,6 +47,9 @@ my %fileHash=(	"\x00\x00\x00\x10","appsboot.mbn",
 		"\x00\x00\x00\xFD","file16.mbn",
 		"\x00\x00\x00\xFE","file18.mbn",
 		"\x00\x00\x00\xFF","file21.mbn",
+		"\x00\x00\x40\xF2","partition_table.mbn", # maybe? http://android-dls.com/wiki/index.php?title=How_to_unpack_and_repack_NB0_file
+		"\x00\x00\x50\xF3","qcsbl.mbn", # https://docs.symbol.com/ReleaseNotes/Release%20Notes%20-%20MC659BOS23001.htm
+		"\x00\x00\x10\xF6","version_boot.txt", # guessed: this is the first boot version listed in boot_versions.txt
 	);
 
 my $unknown_count=0;
