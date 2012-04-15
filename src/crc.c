@@ -7,8 +7,23 @@
 #include "popen2.h"
 #include "crc.h"
 
+typedef struct {
+    int infp;
+    const char *data;
+    int length;
+} pipe_writer_args_t;
+
+static void *
+pipe_writer(void *_args)
+{
+    pipe_writer_args_t *args = (pipe_writer_args_t *) _args;
+    write(args->infp, args->data, args->length);
+    close(args->infp);
+    return NULL;
+}
+
 crc_t *
-crc16(const char *data, int length)
+crc16(const char *data, const int length)
 {
     crc_t *result;
     int infp;
@@ -17,7 +32,8 @@ crc16(const char *data, int length)
     unsigned int temp_read;
     int expected_length;
     char temp[3];
-    ssize_t written;
+    pthread_t writer;
+    pipe_writer_args_t pipe_writer_args;
 
     result = calloc(sizeof(crc_t), 1);
     expected_length = (length + (length % 4096)) / 4096 * 2;
@@ -26,10 +42,11 @@ crc16(const char *data, int length)
 
     temp[2] = '\0';
     i = 0;
-    written = 0;
 
-    write(infp, data, length);
-    close(infp);
+    pipe_writer_args.infp = infp;
+    pipe_writer_args.data = data;
+    pipe_writer_args.length = length;
+    pthread_create(&writer, NULL, pipe_writer, (void *)&pipe_writer_args);
     while(read(outfp, temp, 2) == 2) {
         sscanf(temp, "%02X", &temp_read);
         result->crc[i] = (char)temp_read;
@@ -39,7 +56,6 @@ crc16(const char *data, int length)
     result->crc[i] = '\0';
     result->length = i;
 
-//    close(infp);
     close(outfp);
 
     return result;
