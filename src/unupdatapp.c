@@ -10,8 +10,6 @@
 
 #include "packet.h"
 
-#define USE(x) ((void)(x))
-
 #ifdef HAVE_DEBUG
 void print_bytes(void *value, size_t n)
 {
@@ -43,17 +41,15 @@ void print_bytes(void *value, size_t n)
 #define READED_PTR(val, tam)
 #endif /* HAVE_DEBUG */
 
-/* main program entry point */
-int main(const int argc, const char *argv[])
+int
+unupdatapp(const char *input_file, const char *output_directory)
 {
     FILE *input;
     char destination[255];
     packet_t *packet;
 
-    USE(argc);
-
-    input = fopen(argv[1], "rb");
-    mkdir(argv[2], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    input = fopen(input_file, "rb");
+    mkdir(output_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     while((packet = parse_next_file(input))) {
         printf("Extracted %s - ", packet->filename);
@@ -64,7 +60,7 @@ int main(const int argc, const char *argv[])
             printf("ERROR: CRC did not match\n");
         }
         destination[0] = '\0';
-        strcat(destination, argv[2]);
+        strcat(destination, output_directory);
         strcat(destination, "/");
         strcat(destination, packet->filename);
         FILE* output = fopen(destination, "w+");

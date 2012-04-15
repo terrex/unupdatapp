@@ -1,4 +1,4 @@
-SUBDIRS = src tests
+SUBDIRS = bin src tests
 distclean-local:
 	-mv $(srcdir)/tests/UPDATA.APP /tmp/UPDATA.APP
 	-git clean -f -d
