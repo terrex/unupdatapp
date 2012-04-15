@@ -53,7 +53,7 @@ static int UNKNOWN_COUNT = 0;
 
 static const char* guess_filename(uint32_t file_sequence)
 {
-    int i;
+    size_t i;
     char *result;
 
     for(i = 0; i < sizeof(FILE_SEQS) / sizeof(FILE_SEQS[0]); i++) {
@@ -143,7 +143,7 @@ packet_t *parse_next_file(FILE *input)
     fseek_align4(input);
 
     /* test for crc ok */
-    packet->is_crc_ok = memcmp(new_crc_t(packet->crc, packet->crc_length), crc16(packet->file_data, packet->header.data_file_length), packet->crc_length);
+    packet->is_crc_ok = crc_are_equal(new_crc_t(packet->crc, packet->crc_length), crc16(packet->file_data, packet->header.data_file_length));
 
     return packet;
 }

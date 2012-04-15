@@ -2,32 +2,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include "popen2.h"
 #include "crc.h"
-
-#define TEMP_FILE_FOR_CRC_CHECK "/tmp/crc_temp_checking"
 
 crc_t *
 crc16(const char *data, int length)
 {
-    FILE *pipe;
-    FILE *tmp;
     crc_t *result;
-    char byte;
+    int infp;
+    int outfp;
     int i;
+    int expected_length;
+    char temp[3];
 
     result = calloc(sizeof(crc_t), 1);
-    result->crc = malloc(length / 1024 + 2);
-    remove(TEMP_FILE_FOR_CRC_CHECK);
-    tmp = fopen(TEMP_FILE_FOR_CRC_CHECK, "wb+");
-    fwrite(data, sizeof(char), length, tmp);
-    fclose(tmp);
-    pipe = popen("./crc " TEMP_FILE_FOR_CRC_CHECK, "r");
-    for(i = 0; !feof(pipe); i++) {
-        fscanf(pipe, "%X", result->crc + i);
+    expected_length = (length + 4095) / 4096 * 2;
+    result->crc = malloc(expected_length + 1);
+    popen2("./crc /dev/stdin", &infp, &outfp);
+    write(infp, data, length);
+    close(infp);
+    temp[2] = '\0';
+    i = 0;
+    while(read(outfp, temp, 2) == 2) {
+        sscanf(temp, "%02X", (unsigned int *)result->crc + i);
+        i++;
     }
+printf("%d\n", i);
     result->crc[i] = '\0';
     result->length = i;
-    fclose(pipe);
+    close(outfp);
 
     return result;
 }
@@ -38,8 +42,14 @@ new_crc_t(const char *crc, const size_t length)
     crc_t *result;
 
     result = malloc(sizeof(crc_t));
-    result->crc = crc;
+    result->crc = (char *)crc;
     result->length = length;
 
     return result;
+}
+
+bool
+crc_are_equal(const crc_t *a, const crc_t *b)
+{
+    return a->length == b->length && memcmp(a->crc, b->crc, a->length) == 0;
 }

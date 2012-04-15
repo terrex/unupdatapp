@@ -8,6 +8,8 @@
 
 #include "packet.h"
 
+#define USE(x) ((void)(x))
+
 #ifdef HAVE_DEBUG
 void print_bytes(void *value, size_t n)
 {
@@ -40,16 +42,18 @@ void print_bytes(void *value, size_t n)
 #endif /* HAVE_DEBUG */
 
 /* main program entry point */
-int main(int argc, char *argv[])
+int main(const int argc, const char *argv[])
 {
     FILE *input;
     char destination[255];
     packet_t *packet;
 
+    USE(argc);
+
     input = fopen(argv[1], "rb");
     mkdir(argv[2], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    while(packet = parse_next_file(input)) {
+    while((packet = parse_next_file(input))) {
         printf("Extracted %s - ", packet->filename);
         fflush(stdout);
         if(packet->is_crc_ok) {
