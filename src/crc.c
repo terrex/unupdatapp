@@ -1,4 +1,6 @@
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,32 +32,25 @@ crc16(const char *data, const int length)
     int outfp;
     int i;
     unsigned int temp_read;
-    int expected_length;
-    char temp[3];
+    char temp[2];
     pthread_t writer;
     pipe_writer_args_t pipe_writer_args;
 
     result = calloc(sizeof(crc_t), 1);
-    expected_length = (length + (length % 4096)) / 4096 * 2;
-    result->crc = malloc(expected_length + 1);
+    result->length = ((length % 4096) ? length / 4096 + 1 : length / 4096) * 2;
+    result->crc = malloc(result->length);
     popen2("./crc /dev/stdin", &infp, &outfp);
-
-    temp[2] = '\0';
-    i = 0;
 
     pipe_writer_args.infp = infp;
     pipe_writer_args.data = data;
     pipe_writer_args.length = length;
     pthread_create(&writer, NULL, pipe_writer, (void *)&pipe_writer_args);
+    i = 0;
     while(read(outfp, temp, 2) == 2) {
         sscanf(temp, "%02X", &temp_read);
         result->crc[i] = (char)temp_read;
         i++;
     }
-
-    result->crc[i] = '\0';
-    result->length = i;
-
     close(outfp);
 
     return result;
