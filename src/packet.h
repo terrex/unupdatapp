@@ -29,6 +29,11 @@ typedef struct {
 } packet_t;
 
 /* Parse one single packet (file) */
-packet_t *parse_next_file(FILE *input);
+packet_t *
+parse_next_file(FILE *input);
+
+/* Read a file and convert to packet */
+packet_t *
+read_packet_file(FILE *input);
 
 #endif /* __PACKET_H__ */

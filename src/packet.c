@@ -49,7 +49,7 @@ static file_sequence_pair_t FILE_SEQS[] = {
     { 0xFD000000, "file16.mbn" },
     { 0xFE000000, "file18.mbn" },
     { 0xFF000000, "file21.mbn" },
-    { 0xF2400000, "partition_table.mbn" } /* maybe? http://android-dls.com/wiki/index.php?title=How_to_unpack_and_repack_NB0_file */
+    { 0xF2400000, "partition_table.mbn" }, /* maybe? http://android-dls.com/wiki/index.php?title=How_to_unpack_and_repack_NB0_file */
     { 0xF2500000, "qcsbl.mbn" }, /* https://docs.symbol.com/ReleaseNotes/Release%20Notes%20-%20MC659BOS23001.htm */
     { 0xF6100000, "version_boot.txt"} /* guessed: this is the first boot version
           listed in boot_versions.txt. To be self-upgradable. */
@@ -153,4 +153,15 @@ packet_t *parse_next_file(FILE *input)
     packet->is_crc_ok = crc_are_equal(new_crc_t(packet->crc, packet->crc_length), crc16(packet->file_data, packet->header.data_file_length));
 
     return packet;
+}
+
+packet_t *
+read_packet_file(FILE *input)
+{
+    packet_t *result;
+
+    result = calloc(sizeof(packet_t), 1);
+    /* TODO: filling the result */
+
+    return result;
 }
