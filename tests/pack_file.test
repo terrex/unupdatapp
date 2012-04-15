@@ -1,0 +1,8 @@
+#!/bin/bash -xe
+
+rm -f updatapp
+ln -s ../src/unupdatapp updatapp
+export PATH=.:$PATH
+
+updatapp output_mine UPDATA.APP_mine
+exit $?

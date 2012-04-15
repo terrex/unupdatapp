@@ -65,6 +65,7 @@ static const char* guess_filename(uint32_t file_sequence)
     }
 
     result = calloc(sizeof(char), 20);
+    printf("unknown_file.%d has a file_seq of: %08X\n", UNKNOWN_COUNT, file_sequence);
     sprintf(result, "unknown_file.%d", UNKNOWN_COUNT++);
     return (const char*)result;
 }
