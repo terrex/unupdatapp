@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <time.h>
 #include "packet.h"
 #include "crc.h"
 
@@ -16,6 +18,10 @@ typedef struct {
 } file_sequence_pair_t;
 
 static const char* guess_filename(uint32_t file_sequence);
+
+static uint32_t guess_fileseq(const char *filename);
+
+int file_size(FILE *file);
 
 static void fseek_align4(FILE *input);
 
@@ -74,6 +80,20 @@ static const char* guess_filename(uint32_t file_sequence)
     return (const char*)result;
 }
 
+static uint32_t guess_fileseq(const char *filename)
+{
+    size_t i;
+
+    for(i = 0; i < sizeof(FILE_SEQS) / sizeof(FILE_SEQS[0]); i++) {
+        if(strcmp(filename, FILE_SEQS[i].filename) == 0) {
+            return FILE_SEQS[i].file_sequence;
+        }
+    }
+
+    printf("Error: unknown file sequence for file %s\n", filename);
+    return 0;
+}
+
 static void fseek_align4(FILE *input)
 {
     fpos_t position;
@@ -96,6 +116,20 @@ static void fseek_align4(FILE *input)
             fgetc(input);
             break;
     }
+}
+
+int file_size(FILE *file)
+{
+    int size;
+    int orig;
+
+    orig = ftell(file);
+    /* http://stackoverflow.com/questions/238603/how-can-i-get-a-files-size-in-c#answer-238609 */
+    fseek(file, 0, SEEK_END);
+    size = ftell(file);
+    fseek(file, orig, SEEK_SET);
+
+    return size;
 }
 
 /* public definitions */
@@ -156,12 +190,27 @@ packet_t *parse_next_file(FILE *input)
 }
 
 packet_t *
-read_packet_file(FILE *input)
+read_packet_file(FILE *input, const char *filename, struct stat sbuf)
 {
     packet_t *result;
+    struct tm *tm;
+    crc_t *header_crc;
+    crc_t *file_crc;
 
     result = calloc(sizeof(packet_t), 1);
-    /* TODO: filling the result */
+    result->header.one_value = (uint32_t) 1;
+    strncpy(result->header.hardware_id, "HW7x25\xFF\xFF", 8);
+    result->header.file_sequence = guess_fileseq(filename);
+    result->header.data_file_length = (uint32_t) file_size(input);
+    tm = localtime(&sbuf.st_mtime);
+    strftime(result->header.date, 8, "%Y.%m.%d", tm);
+    strftime(result->header.time, 8, "%H.%M.%S", tm);
+    strcpy(result->header.input_word, "INPUT");
+    result->header.one_value2 = (uint32_t) 1;
+    result->file_data = malloc(result->header.data_file_length);
+    fread(result->file_data, 1, result->header.data_file_length, input);
+    file_crc = crc16(result->file_data, result->header.data_file_length);
+    result->crc = file_crc->crc;
 
     return result;
 }

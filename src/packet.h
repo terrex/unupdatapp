@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 
 typedef struct {
     uint32_t header_length;     /*  4 bytes */
@@ -34,6 +35,6 @@ parse_next_file(FILE *input);
 
 /* Read a file and convert to packet */
 packet_t *
-read_packet_file(FILE *input);
+read_packet_file(FILE *input, const char *filename, struct stat sbuf);
 
 #endif /* __PACKET_H__ */
