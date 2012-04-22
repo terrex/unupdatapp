@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 #include "updatapp.h"
 #include "packet.h"
