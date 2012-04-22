@@ -229,7 +229,7 @@ packet_to_buf(const packet_t *packet, size_t *restrict buf_length)
     size_t padding;
 
     length = packet->header.header_length - 4 + packet->header.data_file_length;
-    padding = length % 4; /* pad zeroes until next 4-byte boundary */
+    padding = (length % 4 == 0) ? 0 : 4 - (length % 4); /* pad zeroes until next 4-byte boundary */
     result = malloc(length + padding);
     memcpy(result, &(packet->header), 94);
     memcpy(result + 94, packet->crc, packet->crc_length);
