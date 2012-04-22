@@ -1,0 +1,15 @@
+#!/bin/bash -xe
+
+rm -Rf output
+rm -Rf output_mine_packed_c
+rm -f unupdatapp_crc16
+
+ln -s crc unupdatapp_crc16
+export PATH=.:$PATH
+
+./split_updata.pl UPDATA.APP_mine
+../src/unupdatapp UPDATA.APP_mine output_mine_packed_c
+
+((cd output_mine && md5sum *) | (cd output_mine_packed_c && md5sum -c)) && \
+((cd output && md5sum *) | (cd output_mine_packed_c && md5sum -c))
+exit $?
