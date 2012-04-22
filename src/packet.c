@@ -203,14 +203,48 @@ read_packet_file(FILE *input, const char *filename, struct stat sbuf)
     result->header.file_sequence = guess_fileseq(filename);
     result->header.data_file_length = (uint32_t) file_size(input);
     tm = localtime(&sbuf.st_mtime);
-    strftime(result->header.date, 8, "%Y.%m.%d", tm);
-    strftime(result->header.time, 8, "%H.%M.%S", tm);
+    strftime(result->header.date, 16, "%Y.%m.%d", tm);
+    strftime(result->header.time, 16, "%H.%M.%S", tm);
     strcpy(result->header.input_word, "INPUT");
     result->header.one_value2 = (uint32_t) 1;
-    result->file_data = malloc(result->header.data_file_length);
+    result->file_data = calloc(1, result->header.data_file_length);
     fread(result->file_data, 1, result->header.data_file_length, input);
     file_crc = crc16(result->file_data, result->header.data_file_length);
     result->crc = file_crc->crc;
+    result->filename = filename;
+    result->crc_length = file_crc->length;
+    result->is_crc_ok = true;
+    /* TODO: computes and fills header crc */
+    result->header.header_length = 98 + result->crc_length;
 
     return result;
+}
+
+/* Convert packet_t into a bytearray */
+char *
+packet_to_buf(const packet_t *packet, size_t *restrict buf_length)
+{
+    char *result;
+    size_t length;
+    size_t padding;
+
+    length = packet->header.header_length - 4 + packet->header.data_file_length;
+    padding = length % 4; /* pad zeroes until next 4-byte boundary */
+    result = malloc(length + padding);
+    memcpy(result, &(packet->header), 94);
+    memcpy(result + 94, packet->crc, packet->crc_length);
+    memcpy(result + 94 + packet->crc_length, packet->file_data, packet->header.data_file_length);
+    memset(result + 94 + packet->crc_length + packet->header.data_file_length, 0, padding);
+
+    *buf_length = length + padding;
+    return result;
+}
+
+
+FILE *
+write_file_separator(FILE *output)
+{
+    fwrite(FILE_SEPARATOR, 4, 1, output);
+
+    return output;
 }

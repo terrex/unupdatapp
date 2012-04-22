@@ -37,4 +37,12 @@ parse_next_file(FILE *input);
 packet_t *
 read_packet_file(FILE *input, const char *filename, struct stat sbuf);
 
+/* Convert packet_t into a bytearray */
+char *
+packet_to_buf(const packet_t *packet, size_t *restrict length);
+
+/* Write file separator */
+FILE *
+write_file_separator(FILE *output);
+
 #endif /* __PACKET_H__ */
