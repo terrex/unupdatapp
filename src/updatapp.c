@@ -58,5 +58,5 @@ updatapp(const char *input_directory, const char *output_file)
     }
     fclose(output);
 
-    return -1; /* TODO: return OK when fully implemented */
+    return 0;
 }

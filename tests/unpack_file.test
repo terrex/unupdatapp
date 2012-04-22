@@ -1,7 +1,5 @@
 #!/bin/bash -xe
 
-exit 0
-
 rm -Rf output
 rm -Rf output_mine
 rm -f unupdatapp_crc16

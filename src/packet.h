@@ -15,7 +15,7 @@ typedef struct {
     char time[16];              /* 16 bytes */
     char input_word[16];        /* 16 bytes */
     char blank[16];             /* 16 bytes */
-    uint16_t header_crc;        /*  2 bytes */
+    char header_crc[2];         /*  2 bytes */
     uint16_t one_value2;        /*  2 bytes */
     uint16_t blank2;            /*  2 bytes */
 } packet_header_t;

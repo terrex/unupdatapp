@@ -168,7 +168,7 @@ packet_t *parse_next_file(FILE *input)
     fread(packet->header.time, sizeof(packet->header.time), 1, input);
     fread(packet->header.input_word, sizeof(packet->header.input_word), 1, input);
     fread(packet->header.blank, sizeof(packet->header.blank), 1, input);
-    fread(&packet->header.header_crc, sizeof(packet->header.header_crc), 1, input);
+    fread(packet->header.header_crc, 1, 2, input);
     fread(&packet->header.one_value2, sizeof(packet->header.one_value2), 1, input);
     fread(&packet->header.blank2, sizeof(packet->header.blank2), 1, input);
 
@@ -196,6 +196,7 @@ read_packet_file(FILE *input, const char *filename, struct stat sbuf)
     struct tm *tm;
     crc_t *header_crc;
     crc_t *file_crc;
+    char *header_bytea;
 
     result = calloc(sizeof(packet_t), 1);
     result->header.one_value = (uint32_t) 1;
@@ -211,11 +212,17 @@ read_packet_file(FILE *input, const char *filename, struct stat sbuf)
     fread(result->file_data, 1, result->header.data_file_length, input);
     file_crc = crc16(result->file_data, result->header.data_file_length);
     result->crc = file_crc->crc;
-    result->filename = filename;
+    result->filename = (char *)filename;
     result->crc_length = file_crc->length;
     result->is_crc_ok = true;
-    /* TODO: computes and fills header crc */
     result->header.header_length = 98 + result->crc_length;
+
+    header_bytea = malloc(98);
+    strncpy(header_bytea, FILE_SEPARATOR, 4);
+    memcpy(header_bytea + 4, &(result->header), 94);
+    header_crc = crc16(header_bytea, 98);
+    strncpy(result->header.header_crc, header_crc->crc, 2);
+    free(header_bytea);
 
     return result;
 }

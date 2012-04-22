@@ -1,8 +1,10 @@
 #!/bin/bash -xe
 
+rm -f unupdatapp_crc16
 rm -f updatapp
 ln -s ../src/unupdatapp updatapp
+ln -s crc unupdatapp_crc16
 export PATH=.:$PATH
 
-gdb --args updatapp output_mine UPDATA.APP_mine
+updatapp output_mine UPDATA.APP_mine
 exit $?
