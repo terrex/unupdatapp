@@ -99,8 +99,13 @@ static void fseek_align4(FILE *input)
     fpos_t position;
 
     fgetpos(input, &position);
-    switch((position.__pos) % 4) { /* perhaps .__pos should be changed to
-                                       another more portable code */
+#if defined(__APPLE__)
+# define FPOS_T_TO_INT(po) (po)
+#else
+# define FPOS_T_TO_INT(po) (po.__pos)
+#endif
+    switch((FPOS_T_TO_INT(position)) % 4) { /* perhaps .__pos should be changed to
+                                               another more portable code */
         case 0:
             break;
         case 1:
